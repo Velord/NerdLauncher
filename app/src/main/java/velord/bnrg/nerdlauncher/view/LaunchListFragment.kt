@@ -1,17 +1,24 @@
 package velord.bnrg.nerdlauncher.view
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import velord.bnrg.nerdlauncher.R
 import velord.bnrg.nerdlauncher.viewModel.LaunchListViewModel
 
@@ -66,11 +73,12 @@ class LaunchListFragment : Fragment() {
     private class ActivityHolder(itemView: View):
         RecyclerView.ViewHolder(itemView), View.OnClickListener {
 
-        private val nameTextView = itemView as TextView
+        private val nameTextView: TextView = itemView.findViewById(R.id.nameApp)
+        private val iconImageView: ImageView = itemView.findViewById(R.id.iconApp)
         private lateinit var resolveInfo: ResolveInfo
 
         init {
-            nameTextView.setOnClickListener(this)
+            itemView.setOnClickListener(this)
         }
 
         override fun onClick(p0: View?) {
@@ -92,9 +100,22 @@ class LaunchListFragment : Fragment() {
         fun bindActivity(resolveInfo: ResolveInfo) {
             this.resolveInfo = resolveInfo
             val pm = itemView.context.packageManager
+            //set icon
+            GlobalScope.launch {
+                setAppIcon(pm)
+            }
+            //set name
             val appName = resolveInfo.loadLabel(pm).toString()
             nameTextView.text = appName
         }
+
+        private suspend fun setAppIcon(pm: PackageManager) =
+            withContext(Dispatchers.Main) {
+                resolveInfo.loadIcon(pm).toBitmap().apply {
+                    iconImageView.setImageBitmap(this)
+                }
+            }
+
     }
 
     private class ActivityAdapter(val activities: List<ResolveInfo>) :
@@ -103,7 +124,7 @@ class LaunchListFragment : Fragment() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActivityHolder {
             val layoutInflater = LayoutInflater.from(parent.context)
             val view = layoutInflater.inflate(
-                android.R.layout.simple_list_item_1, parent, false)
+                R.layout.activity_item, parent, false)
 
             return ActivityHolder(view)
         }

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">NerdLauncher</string>
+    <string name="activity_name">Name other app</string>
+    <string name="activity_icon">Icon other app</string>
 </resources>
